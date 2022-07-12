@@ -21,11 +21,11 @@ mysql-rotate:
 mysql-restart:
 	ssh private-isu "sudo systemctl restart mysql.service"
 
-nginx-reload:
-	ssh private-isu "sudo systemctl reload nginx.service"
-
 nginx-rotate:
 	ssh private-isu "sudo rm -f /var/log/nginx/access.log"
+
+nginx-reload:
+	ssh private-isu "sudo systemctl reload nginx.service"
 
 nginx-restart:
 	ssh private-isu "sudo systemctl restart nginx.service"
@@ -38,7 +38,7 @@ pt-query-digest:
 	ssh private-isu "sudo pt-query-digest --limit 5 /var/log/mysql/mysql-slow.log"
 
 ALPSORT=sum
-ALPM="/api/isu/.+/icon,/api/isu/.+/graph,/api/isu/.+/condition,/api/isu/[-a-z0-9]+,/api/condition/[-a-z0-9]+,/api/catalog/.+,/api/condition\?,/isu/........-....-.+,/?jwt=.+"
+ALPM="/posts/[0-9]+,/posts?.+,/@.+,/image/[0-9]+"
 OUTFORMAT=count,method,uri,min,max,sum,avg,p99
 
 alp:
