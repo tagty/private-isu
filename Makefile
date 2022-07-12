@@ -32,11 +32,10 @@ nginx-restart:
 
 bench-run:
 	ssh private-isu-bench " \
-		cd /home/isucon/bench; \
-		./bench -all-addresses 127.0.0.11 -target 127.0.0.11:443 -tls -jia-service-url http://127.0.0.1:4999"
+		/home/isucon/private_isu.git/benchmarker/bin/benchmarker -u /home/isucon/private_isu.git/benchmarker/userdata -t http://35.75.126.244"
 
 pt-query-digest:
-	ssh private-isu "sudo pt-query-digest --limit 10 /var/log/mysql/mysql-slow.log"
+	ssh private-isu "sudo pt-query-digest --limit 5 /var/log/mysql/mysql-slow.log"
 
 ALPSORT=sum
 ALPM="/api/isu/.+/icon,/api/isu/.+/graph,/api/isu/.+/condition,/api/isu/[-a-z0-9]+,/api/condition/[-a-z0-9]+,/api/catalog/.+,/api/condition\?,/isu/........-....-.+,/?jwt=.+"
