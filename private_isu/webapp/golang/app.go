@@ -614,15 +614,19 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	mime := ""
+	ext := ""
 	if file != nil {
 		// 投稿のContent-Typeからファイルのタイプを決定する
 		contentType := header.Header["Content-Type"][0]
 		if strings.Contains(contentType, "jpeg") {
 			mime = "image/jpeg"
+			ext = "jpg"
 		} else if strings.Contains(contentType, "png") {
 			mime = "image/png"
+			ext = "png"
 		} else if strings.Contains(contentType, "gif") {
 			mime = "image/gif"
+			ext = "gif"
 		} else {
 			session := getSession(r)
 			session.Values["notice"] = "投稿できる画像形式はjpgとpngとgifだけです"
@@ -665,6 +669,17 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err)
 		return
+	}
+
+	image_dir := "/home/isucon/private_isu/webapp/public/"
+	filename := image_dir + fmt.Sprintf("%d", pid) + ext
+	f, err := os.Create(filename)
+	if err != nil {
+		log.Fatalf("file create error")
+	}
+	_, err = f.Write(filedata)
+	if err != nil {
+		log.Fatalf("file write error")
 	}
 
 	http.Redirect(w, r, "/posts/"+strconv.FormatInt(pid, 10), http.StatusFound)
