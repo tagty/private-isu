@@ -208,13 +208,13 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 
 		p.CSRFToken = csrfToken
 
-		// if p.User.DelFlg == 0 {
-		// 	posts = append(posts, p)
-		// }
-		// if len(posts) >= postsPerPage {
-		// 	break
-		// }
-		posts = append(posts, p)
+		if p.User.DelFlg == 0 {
+			posts = append(posts, p)
+		}
+		if len(posts) >= postsPerPage {
+			break
+		}
+		// posts = append(posts, p)
 	}
 
 	return posts, nil
