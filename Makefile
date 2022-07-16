@@ -48,4 +48,4 @@ pprof-kill:
 	ssh private-isu "pgrep -f 'pprof' | xargs kill;"
 
 pprof:
-	ssh private-isu "/home/isucon/.local/go/bin/go tool pprof -http=0.0.0.0:1080 private_isu/webapp/golang/app http://localhost:6060/debug/pprof/profile?seconds=75"
+	go tool pprof -http=0.0.0.0:1080 http://35.75.126.244/debug/pprof/profile
