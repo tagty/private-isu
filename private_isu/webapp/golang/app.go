@@ -883,5 +883,6 @@ func main() {
 	r.Get("/debug/pprof/symbol", pprof.Symbol)
 	r.Get("/debug/pprof/heap", pprof.Handler("heap").ServeHTTP)
 
+	log.Println(http.ListenAndServe("localhost:6060", nil))
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
