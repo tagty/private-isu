@@ -206,6 +206,11 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 
 		p.Comments = comments
 
+		err = db.Get(&p.User, "SELECT * FROM `users` WHERE `id` = ?", p.UserID)
+		if err != nil {
+			return nil, err
+		}
+
 		p.CSRFToken = csrfToken
 
 		if p.User.DelFlg == 0 {
@@ -214,7 +219,47 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 		if len(posts) >= postsPerPage {
 			break
 		}
-		// posts = append(posts, p)
+	}
+
+	return posts, nil
+}
+
+func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([]Post, error) {
+	var posts []Post
+
+	for _, p := range results {
+		err := db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
+		if !allComments {
+			query += " LIMIT 3"
+		}
+		var comments []Comment
+		err = db.Select(&comments, query, p.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		for i := 0; i < len(comments); i++ {
+			err := db.Get(&comments[i].User, "SELECT * FROM `users` WHERE `id` = ?", comments[i].UserID)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// reverse
+		for i, j := 0, len(comments)-1; i < j; i, j = i+1, j-1 {
+			comments[i], comments[j] = comments[j], comments[i]
+		}
+
+		p.Comments = comments
+
+		p.CSRFToken = csrfToken
+
+		posts = append(posts, p)
 	}
 
 	return posts, nil
@@ -390,7 +435,7 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	posts, err := makePosts(results, getCSRFToken(r), false)
+	posts, err := makePostsWithoutUser(results, getCSRFToken(r), false)
 	if err != nil {
 		log.Print(err)
 		return
