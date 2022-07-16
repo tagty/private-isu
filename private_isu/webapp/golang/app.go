@@ -55,7 +55,7 @@ type Post struct {
 	CreatedAt    time.Time `db:"created_at"`
 	CommentCount int
 	Comments     []Comment
-	User         User
+	User         User `db:"user`
 	CSRFToken    string
 }
 
@@ -219,6 +219,47 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 		if len(posts) >= postsPerPage {
 			break
 		}
+	}
+
+	return posts, nil
+}
+
+func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([]Post, error) {
+	var posts []Post
+
+	for _, p := range results {
+		err := db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
+		if !allComments {
+			query += " LIMIT 3"
+		}
+		var comments []Comment
+		err = db.Select(&comments, query, p.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		for i := 0; i < len(comments); i++ {
+			err := db.Get(&comments[i].User, "SELECT * FROM `users` WHERE `id` = ?", comments[i].UserID)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// reverse
+		for i, j := 0, len(comments)-1; i < j; i, j = i+1, j-1 {
+			comments[i], comments[j] = comments[j], comments[i]
+		}
+
+		p.Comments = comments
+
+		p.CSRFToken = csrfToken
+
+		posts = append(posts, p)
 	}
 
 	return posts, nil
@@ -388,13 +429,13 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 
 	results := []Post{}
 
-	err := db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `created_at` DESC")
+	err := db.Select(&results, "SELECT p.id, p.user_id, p.body, p.created_at, p.mime, u.account_name FROM posts AS p JOIN users AS u ON p.user_id = u.id WHERE u.del_flg = 0 ORDER BY p.created_at DESC LIMIT 20")
 	if err != nil {
 		log.Print(err)
 		return
 	}
 
-	posts, err := makePosts(results, getCSRFToken(r), false)
+	posts, err := makePostsWithoutUser(results, getCSRFToken(r), false)
 	if err != nil {
 		log.Print(err)
 		return
