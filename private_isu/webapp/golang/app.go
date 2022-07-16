@@ -33,6 +33,7 @@ const (
 	postsPerPage  = 20
 	ISO8601Format = "2006-01-02T15:04:05-07:00"
 	UploadLimit   = 10 * 1024 * 1024 // 10mb
+	IMAGE_DIR     = "/home/isucon/private_isu/webapp/public/image/"
 )
 
 type User struct {
@@ -671,8 +672,7 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	image_dir := "/home/isucon/private_isu/webapp/public/image/"
-	filename := image_dir + fmt.Sprintf("%d", pid) + "." + ext
+	filename := IMAGE_DIR + fmt.Sprintf("%d", pid) + "." + ext
 	f, err := os.Create(filename)
 	if err != nil {
 		log.Fatalf("file create error")
@@ -714,8 +714,7 @@ func getImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	image_dir := "/home/isucon/private_isu/webapp/public/image/"
-	filename := image_dir + fmt.Sprintf("%d", post.ID) + "." + ext
+	filename := IMAGE_DIR + fmt.Sprintf("%d", post.ID) + "." + ext
 	f, err := os.Create(filename)
 	if err != nil {
 		log.Fatalf("file create error")
