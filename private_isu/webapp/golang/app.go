@@ -872,16 +872,14 @@ func main() {
 	r.Get("/admin/banned", getAdminBanned)
 	r.Post("/admin/banned", postAdminBanned)
 	r.Get(`/@{accountName:[a-zA-Z]+}`, getAccountName)
-	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-		http.FileServer(http.Dir("../public")).ServeHTTP(w, r)
-	})
-
-	r.Get(`/`)
 	r.Get("/debug/pprof/", pprof.Index)
 	r.Get("/debug/pprof/cmdline", pprof.Cmdline)
 	r.Get("/debug/pprof/profile", pprof.Profile)
 	r.Get("/debug/pprof/symbol", pprof.Symbol)
 	r.Get("/debug/pprof/heap", pprof.Handler("heap").ServeHTTP)
+	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
+		http.FileServer(http.Dir("../public")).ServeHTTP(w, r)
+	})
 
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
