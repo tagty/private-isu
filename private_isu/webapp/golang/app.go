@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/http/pprof"
 	"net/url"
 	"os"
 	"os/exec"
@@ -874,6 +875,13 @@ func main() {
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
 		http.FileServer(http.Dir("../public")).ServeHTTP(w, r)
 	})
+
+	r.Get(`/`)
+	r.Get("/debug/pprof/", pprof.Index)
+	r.Get("/debug/pprof/cmdline", pprof.Cmdline)
+	r.Get("/debug/pprof/profile", pprof.Profile)
+	r.Get("/debug/pprof/symbol", pprof.Symbol)
+	r.Get("/debug/pprof/heap", pprof.Handler("heap").ServeHTTP)
 
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
