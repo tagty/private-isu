@@ -673,6 +673,7 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 
 	image_dir := "/home/isucon/private_isu/webapp/public/image/"
 	filename := image_dir + fmt.Sprintf("%d", pid) + "." + ext
+	log.Print(filename)
 	f, err := os.Create(filename)
 	if err != nil {
 		log.Fatalf("file create error")
