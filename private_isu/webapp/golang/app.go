@@ -714,6 +714,17 @@ func getImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	image_dir := "/home/isucon/private_isu/webapp/public/image/"
+	filename := image_dir + fmt.Sprintf("%d", post.ID) + "." + ext
+	f, err := os.Create(filename)
+	if err != nil {
+		log.Fatalf("file create error")
+	}
+	_, err = f.Write(post.Imgdata)
+	if err != nil {
+		log.Fatalf("file write error")
+	}
+
 	w.WriteHeader(http.StatusNotFound)
 }
 
