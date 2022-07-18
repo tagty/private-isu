@@ -35,7 +35,7 @@ bench-run:
 		/home/isucon/private_isu.git/benchmarker/bin/benchmarker -u /home/isucon/private_isu.git/benchmarker/userdata -t http://35.75.126.244"
 
 pt-query-digest:
-	ssh private-isu "sudo pt-query-digest --limit 5 /var/log/mysql/mysql-slow.log"
+	ssh private-isu "sudo pt-query-digest --limit 10 /var/log/mysql/mysql-slow.log"
 
 ALPSORT=sum
 ALPM="/posts/[0-9]+,/posts?.+,/@.+,/image/[0-9]+"
