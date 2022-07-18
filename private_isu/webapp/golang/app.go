@@ -26,8 +26,9 @@ import (
 )
 
 var (
-	db    *sqlx.DB
-	store *gsm.MemcacheStore
+	db             *sqlx.DB
+	store          *gsm.MemcacheStore
+	memcacheClient *memcache.Client
 )
 
 const (
@@ -226,14 +227,10 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 
 func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([]Post, error) {
 	var posts []Post
-	mc := memcache.New("localhost:11211")
+	// mc := memcache.New("localhost:11211")
 
 	for _, p := range results {
-		// cachedCommentsCount := store.Get("comments." + fmt.Sprint(p.ID) + ".count")
-		cachedCommentsCount, err := mc.Get("comments." + fmt.Sprint(p.ID) + ".count")
-		if err != nil {
-			return nil, err
-		}
+		cachedCommentsCount, _ := memcacheClient.Get("comments." + fmt.Sprint(p.ID) + ".count")
 		if cachedCommentsCount != nil {
 			cachedCommentsCountValue, _ := strconv.Atoi(string(cachedCommentsCount.Value))
 			p.CommentCount = cachedCommentsCountValue
@@ -243,7 +240,7 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 				return nil, err
 			}
 			// store.Set("comments."+fmt.Sprint(p.ID)+".count", p.CommentCount)
-			mc.Set(&memcache.Item{Key: "comments." + fmt.Sprint(p.ID) + ".count", Value: []byte(fmt.Sprint(p.CommentCount))})
+			memcacheClient.Set(&memcache.Item{Key: "comments." + fmt.Sprint(p.ID) + ".count", Value: []byte(fmt.Sprint(p.CommentCount))})
 			// mc.Set(&memcache.Item{Key: "comments." + fmt.Sprint(p.ID) + ".count", Value: p.CommentCount})
 		}
 
@@ -252,7 +249,7 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 			query += " LIMIT 3"
 		}
 		var comments []Comment
-		err = db.Select(&comments, query, p.ID)
+		err := db.Select(&comments, query, p.ID)
 		if err != nil {
 			return nil, err
 		}
