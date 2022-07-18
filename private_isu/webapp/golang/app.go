@@ -226,17 +226,25 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 
 func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([]Post, error) {
 	var posts []Post
+	mc := memcache.New("localhost:11211")
 
 	for _, p := range results {
-		cachedCommentsCount := store.Get("comments." + fmt.Sprint(p.ID) + ".count")
-		if cachedCommentsCount {
-			p.CommentCount = cachedCommentsCount
+		// cachedCommentsCount := store.Get("comments." + fmt.Sprint(p.ID) + ".count")
+		cachedCommentsCount, err := mc.Get("comments." + fmt.Sprint(p.ID) + ".count")
+		if err != nil {
+			return nil, err
+		}
+		if cachedCommentsCount != nil {
+			cachedCommentsCountValue, _ := strconv.Atoi(string(cachedCommentsCount.Value))
+			p.CommentCount = cachedCommentsCountValue
 		} else {
 			err := db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
 			if err != nil {
 				return nil, err
 			}
-			store.Set("comments."+fmt.Sprint(p.ID)+".count", p.CommentCount)
+			// store.Set("comments."+fmt.Sprint(p.ID)+".count", p.CommentCount)
+			mc.Set(&memcache.Item{Key: "comments." + fmt.Sprint(p.ID) + ".count", Value: []byte(fmt.Sprint(p.CommentCount))})
+			// mc.Set(&memcache.Item{Key: "comments." + fmt.Sprint(p.ID) + ".count", Value: p.CommentCount})
 		}
 
 		query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
@@ -244,7 +252,7 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 			query += " LIMIT 3"
 		}
 		var comments []Comment
-		err := db.Select(&comments, query, p.ID)
+		err = db.Select(&comments, query, p.ID)
 		if err != nil {
 			return nil, err
 		}
