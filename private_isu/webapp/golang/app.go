@@ -227,7 +227,7 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([]Post, error) {
 	var posts []Post
 
-	mc := memcache.New("localhost:11211")
+	// mc := memcache.New("localhost:11211")
 
 	for _, p := range results {
 		key := "comments." + string(p.ID) + "count"
@@ -237,9 +237,11 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 			return nil, err
 		}
 
-		mc.Set(&memcache.Item{Key: key, Value: []byte(string(p.CommentCount))})
-		cachedCommentsCount, _ := mc.Get(key)
-		log.Print(strconv.Atoi(cachedCommentsCount.Value[0]))
+		// store.Client.Set(&memcache.Item{Key: key, Value: []byte(string(p.CommentCount))}, 0, 0, 0)
+		store.Client.Set(key, string(p.CommentCount), 0, 0, 0)
+		// cachedCommentsCount, _ := store.Get(key)
+		cachedCommentsCount, _, _, _ := store.Client.Get(key)
+		log.Print(cachedCommentsCount)
 
 		query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
 		if !allComments {
