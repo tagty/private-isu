@@ -234,7 +234,6 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 
 	for _, p := range results {
 		key := "comments." + string(p.ID) + "count"
-
 		cachedCommentsCount, _, _, err := store.Client.Get(key)
 		if err != nil && err != memcache.ErrCacheMiss {
 			log.Print(err)
@@ -251,7 +250,6 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 			if err != nil {
 				return nil, err
 			}
-
 			item := CommentCount{
 				CommentCount: p.CommentCount,
 			}
@@ -265,14 +263,34 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 			}
 		}
 
-		query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
-		if !allComments {
-			query += " LIMIT 3"
+		key = "comments" + string(p.ID) + strconv.FormatBool(allComments)
+		cachedComments, _, _, err := store.Client.Get(key)
+		if err != nil && err != memcache.ErrCacheMiss {
+			log.Print(err)
 		}
 		var comments []Comment
-		err = db.Select(&comments, query, p.ID)
-		if err != nil {
-			return nil, err
+		if err != memcache.ErrCacheMiss {
+			err = json.Unmarshal([]byte(cachedComments), &comments)
+			if err != nil {
+				log.Print(err)
+			}
+		} else {
+			query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
+			if !allComments {
+				query += " LIMIT 3"
+			}
+			err = db.Select(&comments, query, p.ID)
+			if err != nil {
+				return nil, err
+			}
+			b, err := json.Marshal(comments)
+			if err != nil {
+				log.Print(err)
+			}
+			_, err = store.Client.Set(key, string(b), 0, 0, 0)
+			if err != nil {
+				log.Print(err)
+			}
 		}
 
 		for i := 0; i < len(comments); i++ {
