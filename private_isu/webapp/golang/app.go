@@ -236,6 +236,7 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 			if err != nil {
 				return nil, err
 			}
+			store.Set("comments."+fmt.Sprint(p.ID)+".count", p.CommentCount)
 		}
 
 		query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
