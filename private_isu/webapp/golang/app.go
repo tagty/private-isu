@@ -245,7 +245,7 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 			if err != nil {
 				log.Print(err)
 			}
-			log.Print(commentCount.CommentCount)
+			p.CommentCount = commentCount.CommentCount
 		}
 
 		err = db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
