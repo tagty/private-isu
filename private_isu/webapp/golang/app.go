@@ -236,15 +236,17 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 		key := "comments." + string(p.ID) + "count"
 
 		cachedCommentsCount, _, _, err := store.Client.Get(key)
-		if err != nil {
+		if err != nil && err != memcache.ErrCacheMiss {
 			log.Print(err)
 		}
-		var commentCount CommentCount
-		err = json.Unmarshal([]byte(cachedCommentsCount), &commentCount)
-		if err != nil {
-			log.Print(err)
+		if err != memcache.ErrCacheMiss {
+			var commentCount CommentCount
+			err = json.Unmarshal([]byte(cachedCommentsCount), &commentCount)
+			if err != nil {
+				log.Print(err)
+			}
+			log.Print(commentCount.CommentCount)
 		}
-		log.Print(commentCount.CommentCount)
 
 		err = db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
 		if err != nil {
