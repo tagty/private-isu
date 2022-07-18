@@ -2,6 +2,7 @@ package main
 
 import (
 	crand "crypto/rand"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -224,6 +225,10 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 	return posts, nil
 }
 
+type CommentCount struct {
+	CommentCount int `json:"comment_count"`
+}
+
 func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([]Post, error) {
 	var posts []Post
 
@@ -235,12 +240,27 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 			return nil, err
 		}
 
-		store.Client.Set(key, string(p.CommentCount), 0, 0, 0)
+		item := CommentCount{
+			CommentCount: p.CommentCount,
+		}
+		b, err := json.Marshal(item)
+		if err != nil {
+			log.Print(err)
+		}
+		err = store.Client.Set(key, b, 0, 0, 0)
+		if err != nil {
+			log.Print(err)
+		}
 		cachedCommentsCount, _, _, err := store.Client.Get(key)
 		if err != nil {
 			log.Print(err)
 		}
-		log.Print(cachedCommentsCount)
+		var commentCount CommentCount
+		err = json.Unmarshal(cachedCommentsCount, commentCount)
+		if err != nil {
+			log.Print(err)
+		}
+		log.Print(commentCount)
 
 		query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
 		if !allComments {
