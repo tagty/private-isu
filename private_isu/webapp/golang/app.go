@@ -2,6 +2,7 @@ package main
 
 import (
 	crand "crypto/rand"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -224,23 +225,72 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 	return posts, nil
 }
 
+type CommentCount struct {
+	CommentCount int `json:"comment_count"`
+}
+
 func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([]Post, error) {
 	var posts []Post
 
 	for _, p := range results {
-		err := db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
-		if err != nil {
-			return nil, err
+		key := "comments." + string(p.ID) + "count"
+		cachedCommentsCount, _, _, err := store.Client.Get(key)
+		if err != nil && err != memcache.ErrCacheMiss {
+			log.Print(err)
+		}
+		if err != memcache.ErrCacheMiss {
+			var commentCount CommentCount
+			err = json.Unmarshal([]byte(cachedCommentsCount), &commentCount)
+			if err != nil {
+				log.Print(err)
+			}
+			p.CommentCount = commentCount.CommentCount
+		} else {
+			err = db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
+			if err != nil {
+				return nil, err
+			}
+			item := CommentCount{
+				CommentCount: p.CommentCount,
+			}
+			b, err := json.Marshal(item)
+			if err != nil {
+				log.Print(err)
+			}
+			_, err = store.Client.Set(key, string(b), 0, 0, 0)
+			if err != nil {
+				log.Print(err)
+			}
 		}
 
-		query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
-		if !allComments {
-			query += " LIMIT 3"
+		key = "comments" + string(p.ID) + strconv.FormatBool(allComments)
+		cachedComments, _, _, err := store.Client.Get(key)
+		if err != nil && err != memcache.ErrCacheMiss {
+			log.Print(err)
 		}
 		var comments []Comment
-		err = db.Select(&comments, query, p.ID)
-		if err != nil {
-			return nil, err
+		if err != memcache.ErrCacheMiss {
+			err = json.Unmarshal([]byte(cachedComments), &comments)
+			if err != nil {
+				log.Print(err)
+			}
+		} else {
+			query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
+			if !allComments {
+				query += " LIMIT 3"
+			}
+			err = db.Select(&comments, query, p.ID)
+			if err != nil {
+				return nil, err
+			}
+			b, err := json.Marshal(comments)
+			if err != nil {
+				log.Print(err)
+			}
+			_, err = store.Client.Set(key, string(b), 0, 0, 0)
+			if err != nil {
+				log.Print(err)
+			}
 		}
 
 		for i := 0; i < len(comments); i++ {
