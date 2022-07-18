@@ -246,23 +246,23 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 				log.Print(err)
 			}
 			p.CommentCount = commentCount.CommentCount
-		}
+		} else {
+			err = db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
+			if err != nil {
+				return nil, err
+			}
 
-		err = db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		item := CommentCount{
-			CommentCount: p.CommentCount,
-		}
-		b, err := json.Marshal(item)
-		if err != nil {
-			log.Print(err)
-		}
-		_, err = store.Client.Set(key, string(b), 0, 0, 0)
-		if err != nil {
-			log.Print(err)
+			item := CommentCount{
+				CommentCount: p.CommentCount,
+			}
+			b, err := json.Marshal(item)
+			if err != nil {
+				log.Print(err)
+			}
+			_, err = store.Client.Set(key, string(b), 0, 0, 0)
+			if err != nil {
+				log.Print(err)
+			}
 		}
 
 		query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
