@@ -227,6 +227,11 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([]Post, error) {
 	var posts []Post
 
+	mc := memcache.New("localhost:11211")
+	mc.Set(&memcache.Item{Key: "foo", Value: []byte("my value")})
+	it, _ := mc.Get("foo")
+	log.Print(it)
+
 	for _, p := range results {
 		err := db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
 		if err != nil {
