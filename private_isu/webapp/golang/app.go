@@ -228,6 +228,8 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 	var posts []Post
 
 	for _, p := range results {
+		cachedCommentsCount := store.Get("comments." + fmt.Sprint(p.ID) + ".count")
+		log.Print(cachedCommentsCount)
 		err := db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
 		if err != nil {
 			return nil, err

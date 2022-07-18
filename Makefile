@@ -48,4 +48,4 @@ pprof-kill:
 	ssh private-isu "pgrep -f 'pprof' | xargs kill;"
 
 pprof:
-	go tool pprof -http=0.0.0.0:1080 -seconds=45 http://35.75.126.244/debug/pprof/profile
+	go tool pprof -http=0.0.0.0:1080 -seconds=60 http://35.75.126.244/debug/pprof/profile
