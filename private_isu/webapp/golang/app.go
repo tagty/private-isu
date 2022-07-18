@@ -260,7 +260,7 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 		if err != nil {
 			log.Print(err)
 		}
-		log.Print(commentCount)
+		log.Print(commentCount.CommentCount)
 
 		query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
 		if !allComments {
