@@ -229,10 +229,13 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 
 	for _, p := range results {
 		cachedCommentsCount := store.Get("comments." + fmt.Sprint(p.ID) + ".count")
-		log.Print(cachedCommentsCount)
-		err := db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
-		if err != nil {
-			return nil, err
+		if cachedCommentsCount {
+			p.CommentCount = cachedCommentsCount
+		} else {
+			err := db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
@@ -240,7 +243,7 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 			query += " LIMIT 3"
 		}
 		var comments []Comment
-		err = db.Select(&comments, query, p.ID)
+		err := db.Select(&comments, query, p.ID)
 		if err != nil {
 			return nil, err
 		}
