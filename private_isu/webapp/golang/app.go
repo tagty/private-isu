@@ -247,7 +247,7 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 		if err != nil {
 			log.Print(err)
 		}
-		err = store.Client.Set(key, b, 0, 0, 0)
+		_, err = store.Client.Set(key, string(b), 0, 0, 0)
 		if err != nil {
 			log.Print(err)
 		}
@@ -256,7 +256,7 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 			log.Print(err)
 		}
 		var commentCount CommentCount
-		err = json.Unmarshal(cachedCommentsCount, commentCount)
+		err = json.Unmarshal([]byte(cachedCommentsCount), commentCount)
 		if err != nil {
 			log.Print(err)
 		}
