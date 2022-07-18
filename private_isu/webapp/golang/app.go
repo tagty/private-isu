@@ -239,7 +239,7 @@ func makePostsWithoutUser(results []Post, csrfToken string, allComments bool) ([
 
 		mc.Set(&memcache.Item{Key: key, Value: []byte(string(p.CommentCount))})
 		cachedCommentsCount, _ := mc.Get(key)
-		log.Print(cachedCommentsCount.Value[0])
+		log.Print(strconv.Atoi(cachedCommentsCount.Value[0]))
 
 		query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
 		if !allComments {
